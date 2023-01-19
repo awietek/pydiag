@@ -1,11 +1,10 @@
 from .ensemble import Ensemble
 
 import numpy as np
-from scipy.linalg import expm
 
 from collections import OrderedDict
 
-class EnsembleArray:
+class Array:
     """ Class defining an ensemble of array values
     
     Attributes:
@@ -15,7 +14,7 @@ class EnsembleArray:
     """
 
     def __init__(self, ensemble, data, tag=None, dtype=None):
-        """ Constructor of EnsembleArray
+        """ Constructor of ensemble.Array
     
         Arguments:
             ensemble (Ensemble): ensemble defining blocks and degeneracies
@@ -68,31 +67,32 @@ class EnsembleArray:
         if np.isscalar(other):
             for block, arr in self.items():
                 data[block] = arr + other 
-            return EnsembleArray(self.ensemble, data)
+            return Array(self.ensemble, data)
         else:
             for block, arr in self.items():
                 data[block] = arr + other[block] 
-            return EnsembleArray(self.ensemble, data)
+            return Array(self.ensemble, data)
         
     def __sub__(self, other):
         data = OrderedDict()
         if np.isscalar(other):
             for block, arr in self.items():
                 data[block] = arr - other 
-            return EnsembleArray(self.ensemble, data)
+            return Array(self.ensemble, data)
         else:
             for block, arr in self.items():
                 data[block] = arr - other[block] 
-            return EnsembleArray(self.ensemble, data)
+            return Array(self.ensemble, data)
 
     def __mul__(self, other):
         data = OrderedDict()
         if np.isscalar(other):
             for block, arr in self.items():
                 data[block] = arr * other 
-            return EnsembleArray(self.ensemble, data)
         else:
-            raise TypeError("only multiplications with scalars are allowed")
+            for block, arr in self.items():
+                data[block] = arr * other[block] 
+        return Array(self.ensemble, data)
 
     def __rmul__(self, other):
         return self.__mul__(other)
@@ -101,10 +101,11 @@ class EnsembleArray:
         data = OrderedDict()
         if np.isscalar(other):
             for block, arr in self.items():
-                data[block] = arr / other 
-            return EnsembleArray(self.ensemble, data)
+                data[block] = arr / other
         else:
-            raise TypeError("only divisions with scalars are allowed")
+            for block, arr in self.items():
+                data[block] = arr / other[block]
+        return Array(self.ensemble, data)
 
     def __getitem__(self, k):
         data = OrderedDict()
@@ -112,11 +113,8 @@ class EnsembleArray:
             if len(arr) > 0:
                 data[block] = arr[k]
             else:
-                print(self.ndim * (0,))
                 data[block] = np.empty(self.ndim * (0))
-
-                
-        return EnsembleArray(self.ensemble, data)
+        return Array(self.ensemble, data)
              
     def keys(self):
         return self.array.keys().__iter__()
@@ -127,60 +125,14 @@ class EnsembleArray:
     def items(self):
         return self.array.items().__iter__()
 
+    def flatten(self):
+        """
+        Returns a flattened version of the entries same as in numpy.flatten
 
-def ensemble_expm(A):
-    """ Compute the matrix exponential of an EnsembleArray
-
-    Args:
-         A (EnsemleArray) : Input with last two dimensions are square (..., n, n).
-    Returns:
-         EnsembleArray : the resulting matrix exponential with the same shape of A
-    """
-    data = OrderedDict()
-    for block, arr in A.items():
-        data[block] = expm(arr)
-    return EnsembleArray(A.ensemble, data)
-
-
-def ensemble_transpose(A):
-    """ Returns an EnsembleArray with axes transposed.
-
-    Args:
-         A (EnsemleArray) : Input array
-    Returns:
-         EnsembleArray : A with its axes permuted.
-    """
-    data = OrderedDict()
-    for block, arr in A.items():
-        data[block] = np.transpose(arr)
-    return EnsembleArray(A.ensemble, data)
-
-def ensemble_conj(A):
-    """ Returns complex conjugate of an EnsembleArray
-
-    Args:
-         A (EnsemleArray) : Input array
-    Returns:
-         EnsembleArray : complex conjugate of A
-    """
-    data = OrderedDict()
-    for block, arr in A.items():
-        data[block] = np.conj(arr)
-    return EnsembleArray(A.ensemble, data)
-
-def ensemble_dot(a, b):
-    """ dot product of two EnsembleArrays as defined by numpy.dot
-
-    Args:
-         a (EnsemleArray) : First array
-         b (EnsemleArray) : First array
-    Returns:
-         EnsembleArray : dot product of all blocks
-    """
-    data = OrderedDict()
-    if a.ensemble != b.ensemble:
-        raise ValueError("a and b do not share the same ensemble")
-    
-    for block, deg in a.ensemble:
-        data[block] = np.dot(a.array[block], b.array[block])
-    return EnsembleArray(a.ensemble, data)
+        Returns:
+            ensemble.Array: The flattened array
+        """
+        data = OrderedDict()
+        for block, arr in self.items():
+            data[block] = arr.flatten()
+        return Array(self.ensemble, data)

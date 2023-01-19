@@ -1,6 +1,6 @@
 from .ensemble import Ensemble
-from .ensemble_array import EnsembleArray
-from .ensemble_scalar import EnsembleScalar
+from .array import Array
+from .scalar import Scalar
 
 import numpy as np
 import scipy as sp
@@ -8,7 +8,7 @@ import scipy.linalg
 
 from collections import OrderedDict
 
-class EnsembleTriDiag:
+class TriDiag:
     """ Class defining an ensemble of symmetric tridiagonal matrices
     
     Attributes:
@@ -18,7 +18,7 @@ class EnsembleTriDiag:
     """
 
     def __init__(self, ensemble, data, diag_tag="diag", offdiag_tag="offdiag", dtype=None):
-        """ Constructor of EnsembleTriDiag
+        """ Constructor of TriDiag
     
         Arguments:
             ensemble (Ensemble): ensemble defining blocks and degeneracies
@@ -38,8 +38,8 @@ class EnsembleTriDiag:
         if not isinstance(diag_tag, str) or not isinstance(offdiag_tag, str):
             raise TypeError("diag_tag / offdiag_tag both need to be strings")
         
-        ens_diag = EnsembleArray(ensemble, data, tag=diag_tag, dtype=dtype)
-        ens_offdiag = EnsembleArray(ensemble, data, tag=offdiag_tag, dtype=dtype)        
+        ens_diag = Array(ensemble, data, tag=diag_tag, dtype=dtype)
+        ens_offdiag = Array(ensemble, data, tag=offdiag_tag, dtype=dtype)        
 
         for block, deg in ensemble:
             d = ens_diag.array[block].flatten()
@@ -89,7 +89,7 @@ class EnsembleTriDiag:
         """ Compute the smallest eigenvalue of the tridiagonal blocks
     
         Returns:
-            EnsembleScalar:  the smallest eigenvalue of each block
+            ensemble.Scalar:  the smallest eigenvalue of each block
         """
         data_e0 = OrderedDict()
         for block, deg in self.ensemble:
@@ -101,14 +101,14 @@ class EnsembleTriDiag:
                 data_e0[block] = \
                     sp.linalg.eigvalsh_tridiagonal(self.diag[block], self.offdiag[block],\
                                             'i', select_range=(0,0), check_finite=False)[0]
-        return EnsembleScalar(self.ensemble, data_e0)
+        return Scalar(self.ensemble, data_e0)
             
     def eig(self):
         """ Compute the eigen decomposition of the tridiagonal blocks
     
         Returns:
-            EnsembleArray:  1d EnsembleArray containing the eigenvalues
-            EnsembleArray:  2d EnsembleArray containing the eigenvectors
+            ensemble.Array:  1d ensemble.Array containing the eigenvalues
+            ensemble.Array:  2d ensemble.Array containing the eigenvectors
         """
         data_evals = OrderedDict()
         data_evecs = OrderedDict()
@@ -124,13 +124,13 @@ class EnsembleTriDiag:
                     sp.linalg.eigh_tridiagonal(self.diag[block], self.offdiag[block],
                                                check_finite=False, select='a',
                                                lapack_driver='stev')
-        return EnsembleArray(self.ensemble, data_evals), EnsembleArray(self.ensemble, data_evecs)
+        return Array(self.ensemble, data_evals), Array(self.ensemble, data_evecs)
 
     def eigvals(self):
         """ Compute the eigenvalues of the tridiagonal blocks
     
         Returns:
-            EnsembleArray:  1d EnsembleArray containing the eigenvalues
+            ensemble.Array:  1d ensemble.Array containing the eigenvalues
         """
         data_evals = OrderedDict()
         for block, deg in self.ensemble:
@@ -143,13 +143,13 @@ class EnsembleTriDiag:
                     self.diag[block], self.offdiag[block],
                     check_finite=False, select='a')
 
-        return EnsembleArray(self.ensemble, data_evals)
+        return Array(self.ensemble, data_evals)
 
     def asarray(self):
         """ Transform the tridiagonal matrices to proper 2d arrays
     
         Returns:
-            EnsembleArray:  2d EnsembleArray containing the matrices
+            ensemble.Array:  2d ensemble.Array containing the matrices
         """
         data_mats = OrderedDict()
         for block, deg in self.ensemble:
@@ -160,4 +160,4 @@ class EnsembleTriDiag:
                 data_mats[block] = np.diag(self.diag[block]) + \
                                np.diag(self.offdiag[block], k=1) + \
                                np.diag(self.offdiag[block], k=-1)
-        return EnsembleArray(self.ensemble, data_mats)
+        return Array(self.ensemble, data_mats)
