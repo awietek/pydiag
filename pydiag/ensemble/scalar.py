@@ -86,6 +86,12 @@ class Scalar:
                 data[block] = arr - other[block] 
             return Scalar(self.ensemble, data)
 
+    def __neg__(self):
+        data = OrderedDict()
+        for block, arr in self.items():
+            data[block] = -arr
+        return Array(self.ensemble, data)
+        
     def __mul__(self, other):
         data = OrderedDict()
         if np.isscalar(other):

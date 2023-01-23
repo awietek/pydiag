@@ -1,4 +1,5 @@
 from .ensemble import Ensemble
+from .scalar import Scalar
 
 import numpy as np
 
@@ -84,6 +85,12 @@ class Array:
                 data[block] = arr - other[block] 
             return Array(self.ensemble, data)
 
+    def __neg__(self):
+        data = OrderedDict()
+        for block, arr in self.items():
+            data[block] = -arr
+        return Array(self.ensemble, data)
+        
     def __mul__(self, other):
         data = OrderedDict()
         if np.isscalar(other):
@@ -136,3 +143,49 @@ class Array:
         for block, arr in self.items():
             data[block] = arr.flatten()
         return Array(self.ensemble, data)
+
+    def concatenate(self, degeneracies=True):
+        """
+        Concatenates all the entries from different blocks to return a single array
+
+        Args:
+            degeneracies (bool): flag whether concatenation is done with degeneracies
+        Returns:
+            np.ndarray: The flattened array
+        """
+        if degeneracies:
+            arrs = []
+            for block, deg in self.ensemble:
+                for i in range(deg):
+                    arrs.append(self.array[block])
+            return np.concatenate(arrs)
+        else:
+            return np.concatenate([arr for arr in self.values()])
+
+    def min(self):
+        """ compute minimal value of arrays in all blocks
+    
+        Returns:
+            ensemble.Scalar: minimal values of all blocks
+        """
+        data = OrderedDict()
+        for block, arr in self.items():
+            if len(arr) == 0:
+                data[block] = None
+            else:
+                data[block] = np.min(arr)
+        return Scalar(self.ensemble, data)
+
+    def max(self):
+        """ compute maximal value of arrays in all blocks
+    
+        Returns:
+            ensemble.Scalar: maximal values of all blocks
+        """
+        data = OrderedDict()
+        for block, arr in self.items():
+            if len(arr) == 0:
+                data[block] = None
+            else:
+                data[block] = np.max(arr)
+        return Scalar(self.ensemble, data)

@@ -23,6 +23,42 @@ def expm(A):
     else:
         raise TypeError("input needs to be an ensemble.Array")
 
+def exp(A):
+    """ Compute the component-wise exponential of an ensemble.Array
+
+    Args:
+         A (ensemble.Array) : Input array.
+    Returns:
+         ensemble.Array : the resulting component-wise exponential with the same shape of A
+    """
+    if isinstance(A, Array):
+        data = OrderedDict()
+        for block, arr in A.items():
+            data[block] = np.exp(arr)
+        return Array(A.ensemble, data)
+    else:
+        raise TypeError("input needs to be an ensemble.Array")
+
+def sum(A, degeneracies=True):
+    """ Compute the sum of all entries (possible with degeneracies)
+
+    Args:
+         A (ensemble.Array) : Input array
+         degeneracies (bool): flag whether or not degeneracies are considered
+    Returns:
+         float : the resulting component-wise exponential with the same shape of A
+    """
+    sm = 0.
+    if isinstance(A, Array):
+        for block, deg in A.ensemble:
+            if degeneracies:
+                sm += np.sum(A.array[block]) * deg
+            else:
+                sm += np.sum(A.array[block])
+        return sm
+    else:
+        raise TypeError("input needs to be an ensemble.Array")
+    
 
 def transpose(A):
     """ Returns an ensemble.Array with axes transposed.
@@ -40,6 +76,22 @@ def transpose(A):
     else:
         raise TypeError("input needs to be an ensemble.Array")
 
+def abs(A):
+    """ Returns absolute values of an ensemble.Array
+
+    Args:
+         A (ensebmle.Array) : Input array
+    Returns:
+         Array : absolute values of A
+    """
+    if isinstance(A, Array):
+        data = OrderedDict()
+        for block, arr in A.items():
+            data[block] = np.abs(arr)
+        return Array(A.ensemble, data)
+    else:
+        raise TypeError("input needs to be an ensemble.Array")
+   
 
 def conj(A):
     """ Returns complex conjugate of an ensemble.Array
